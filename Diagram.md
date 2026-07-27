@@ -1,10 +1,13 @@
 ```mermaid
 graph TD
+    %% Chủ thể (Actor)
+    User(("👤 Người Dùng (Nhà tài trợ)"))
+
     %% Khối Người dùng & Giao diện
     subgraph UILayer [Tầng Giao Diện Người Dùng]
         MapUI["Bản đồ Dự án 3-5km"]
         FeedUI["Live Feed - Dòng tiền và Cột mốc"]
-        ActionUI["Góp vốn và Tải ảnh chứng minh"]
+        ActionUI["Giao diện: Góp vốn và Tải ảnh"]
     end
 
     %% Khối Xử lý Trung tâm
@@ -33,7 +36,12 @@ graph TD
         Map_API["Google Maps - Geo API"]
     end
 
-    %% --- ĐỊNH NGHĨA LUỒNG DỮ LIỆU ---
+    %% --- ĐỊNH NGHĨA LUỒNG TƯƠNG TÁC CỦA NGƯỜI DÙNG ---
+    User -->|1. Xem dự án quanh khu vực| MapUI
+    User -->|2. Bấm Góp vốn / Chuyển khoản| ActionUI
+    User -.->|Theo dõi minh bạch| FeedUI
+
+    %% --- ĐỊNH NGHĨA LUỒNG DỮ LIỆU BÊN TRONG ---
 
     MapUI -->|Gửi Tọa độ GPS| API_Gateway
     API_Gateway --> Location_Svc
@@ -41,18 +49,18 @@ graph TD
     Location_Svc <-->|Lấy dữ liệu dự án| DB_Main
     Location_Svc -->|Trả kết quả hiển thị| MapUI
 
-    ActionUI -->|Chuyển khoản - Góp vốn| Bank_API
-    Bank_API -->|Webhook báo giao dịch| API_Gateway
+    ActionUI -->|Thực hiện giao dịch| Bank_API
+    Bank_API -->|Webhook báo nhận tiền thành công| API_Gateway
     API_Gateway --> Escrow_Mgr
-    Escrow_Mgr -->|Lưu lịch sử dòng tiền| DB_Ledger
-    Escrow_Mgr -->|Đẩy thông tin giao dịch| Stream_Engine
-    Stream_Engine -.->|Cập nhật Real-time| FeedUI
+    Escrow_Mgr -->|Lưu lịch sử dòng tiền vào sổ cái| DB_Ledger
+    Escrow_Mgr -->|Đẩy thông tin giao dịch mới| Stream_Engine
+    Stream_Engine -.->|Cập nhật dữ liệu Real-time| FeedUI
 
-    ActionUI -->|Upload ảnh hoàn thành| API_Gateway
+    ActionUI -->|Chủ dự án Upload ảnh chứng minh| API_Gateway
     API_Gateway --> CV_Model
     CV_Model --> Fraud_Detection
-    Fraud_Detection -->|Trả kết quả xác thực| Escrow_Mgr
+    Fraud_Detection -->|Trả kết quả AI xác thực| Escrow_Mgr
     Escrow_Mgr -->|Cập nhật trạng thái| DB_Main
-    Escrow_Mgr -->|Thông báo Mở khóa Tiền| Stream_Engine
+    Escrow_Mgr -->|Lệnh Mở khóa Ký quỹ| Stream_Engine
     Stream_Engine -.->|Cập nhật AI Mở khóa| FeedUI
 ```
